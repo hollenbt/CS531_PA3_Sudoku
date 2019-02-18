@@ -71,7 +71,7 @@ public:
             cout << "Puzzle #: " << puzzle_no << endl;
             cout << "MRV? " << boolalpha << MRV << endl;
             cout << "Scheme: " << scheme << endl;
-            cout << "Completion: " << setprecision(1) << (100 * filled) / 81.0 << '%' << endl;;
+            cout << "Completion: " << fixed << setprecision(1) << (100 * filled) / 81.0 << '%' << endl;;
             cout << "Guess count: " << guess_count << endl;
             cout << "Naked single applications:  " << naked_single_apps << endl;
             cout << "Hidden single applications: " << hidden_single_apps << endl;
@@ -83,7 +83,7 @@ public:
         #else
             cout << puzzle_no << ',' << guess_count << ','
                  << boolalpha << MRV << ',' << scheme << ','
-                 << setprecision(1) << 100 * filled / 81.0 << ','
+                 << fixed << setprecision(1) << 100 * filled / 81.0 << ','
                  << naked_single_apps << ',' << hidden_single_apps << ','
                  << naked_pair_apps << ',' << hidden_pair_apps << ','
                  << naked_triple_apps << ',' << hidden_triple_apps << endl;
