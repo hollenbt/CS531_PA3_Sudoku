@@ -13,7 +13,13 @@ class Inferer {
     int puzzle_no;
     bool MRV;
     int scheme;
-    vector<vector<pair<int, int>>> assignments;
+
+    // Assignment and domain restriction transcripts
+    vector<vector<pair<int, int>>>                       assignments;
+    vector<vector<pair<pair<int, int>, int>>>            cell_restrict;
+    vector<vector<pair<pair<int, int>, int>>>            row_restrict;
+    vector<vector<pair<pair<int, int>, int>>>            col_restrict;
+    vector<vector<pair<pair<int, int>, pair<int, int>>>> block_restrict;
 
     // Search and Inference Stats
     int guess_count        = 0;
@@ -28,9 +34,10 @@ class Inferer {
     // of unordered_set vs. set is irrelevant. We can experiment with both to see
     // which has better time and space performance.
 
-    // Cells values: if assigned, set will be emtpy
+    // Possible values by cell: if assigned, set will be emtpy
     vector<vector<set<int>>> cell;
-    // Value locations: if assigned, set will be empty
+
+    // Possibly locations for values by row, column, and block: if assigned, set will be empty
     vector<vector<set<int>>> row;              // row[row #][value]:     set of col #'s
     vector<vector<set<int>>> col;              // col[col #][value]:     set of row #'s
     vector<vector<set<pair<int,int>>>> block;  // block[block #][value]: set of coords
@@ -46,10 +53,11 @@ class Inferer {
 
 public:
     Inferer(int **b, int p_no, bool mrv, int s) : puzzle_no(p_no), MRV(mrv), scheme(s) {
-        new_assignment_layer();
+        new_layer();
         for (int i = 0; i < 9; ++i)
             for (int j = 0; j < 9; ++j)
                 board[i][j] = b[i][j];
+        initialize();
     }
 
     int get_guess_count() { return guess_count; }
@@ -90,8 +98,12 @@ public:
         #endif
     }
 
-    void new_assignment_layer() {
-        assignments.push_back(vector<pair<int, int>>());
+    void new_layer() {
+        assignments.emplace_back();
+        cell_restrict.emplace_back();
+        row_restrict.emplace_back();
+        col_restrict.emplace_back();
+        block_restrict.emplace_back();
     }
 
     int infer() {
@@ -140,13 +152,12 @@ public:
         return initialize();
     }
 
-    void guess(pair<int, int> &p, int v) {
+    int guess(pair<int, int> &var, int val) {
         #ifdef DEBUG
             cout << "Guess " << val << " for (" << var.first << ", " << var.second << ")" << endl;
         #endif
         ++guess_count;
-        board[p.first][p.second] = v;
-        assignments.back().push_back(p);
+        return assign(var.first, var.second, val);
     }
 
     // Initializes variable domains for inference. Can also be used to perform
@@ -205,10 +216,10 @@ public:
         // Clear the sets to indicate assignment
         // (and prevent domain restriction from
         // returning empty domain error)
-        cell[i][j].clear();
-        row[i][v - 1].clear();
-        col[j][v - 1].clear();
-        block[b][v - 1].clear();
+        clear_cell(i, j);
+        clear_row(i, v);
+        clear_col(j, v);
+        clear_block(b, v);
 
         // Remove value from rest of row and column.
         // Remove coordinates from all other values.
@@ -228,11 +239,24 @@ public:
         return 1;
     }
 
-    // Reverse all assignments made during inference
-    void unassign() {
+    // Reverse all assignments and domain restrictions made during inference
+    // and from last guess, if any.
+    void backtrack() {
         for (const pair<int, int> &p : assignments.back())
             board[p.first][p.second] = 0;
         assignments.pop_back();
+        for (const pair<pair<int, int>, int> &p : cell_restrict.back())
+            cell[p.first.first][p.first.second].insert(p.second);
+        cell_restrict.pop_back();
+        for (const pair<pair<int, int>, int> &p : row_restrict.back())
+            row[p.first.first][p.first.second].insert(p.second);
+        row_restrict.pop_back();
+        for (const pair<pair<int, int>, int> &p : col_restrict.back())
+            col[p.first.first][p.first.second].insert(p.second);
+        col_restrict.pop_back();
+        for (const pair<pair<int, int>, pair<int, int>> &p : block_restrict.back())
+            block[p.first.first][p.first.second].insert(p.second);
+        block_restrict.pop_back();
     }
 
     /**********************
@@ -241,13 +265,51 @@ public:
      // Return: true if restriction makes a domain empty,
      //         false otherwise
     bool eliminate(int i, int j, int v) {
-        if (cell[i][j].erase(v) && cell[i][j].empty()) return true;
-        if (row[i][v - 1].erase(j) && row[i][v - 1].empty()) return true;
-        if (col[j][v - 1].erase(i) && col[j][v - 1].empty()) return true;
+        if (cell[i][j].erase(v)) {
+            cell_restrict.back().emplace_back(make_pair(i, j), v);
+            if (cell[i][j].empty()) return true;
+        }
+        if (row[i][v - 1].erase(j)) {
+            row_restrict.back().emplace_back(make_pair(i, v - 1), j);
+            if (row[i][v - 1].empty()) return true;
+        }
+        if (col[j][v - 1].erase(i)) {
+            col_restrict.back().emplace_back(make_pair(j, v - 1), i);
+            if (col[j][v - 1].empty()) return true;
+        }
         pair<int, int> p(i, j);
         int b = get_block(p);
-        if (block[b][v - 1].erase(p) && block[b][v - 1].empty()) return true;
+        if (block[b][v - 1].erase(p)) {
+            block_restrict.back().emplace_back(make_pair(b, v - 1), p);
+            if (block[b][v - 1].empty()) return true;
+        }
         return false;
+    }
+
+    // The following functions remember all elements in the set
+    // before clearing it.
+    void clear_cell(int i, int j) {
+        for (int v : cell[i][j])
+            cell_restrict.back().emplace_back(make_pair(i, j), v);
+        cell[i][j].clear();
+    }
+
+    void clear_row(int i, int v) {
+        for (int j : row[i][v - 1])
+            row_restrict.back().emplace_back(make_pair(i, v - 1), j);
+        row[i][v - 1].clear();
+    }
+
+    void clear_col(int j, int v) {
+        for (int i : col[j][v - 1])
+            col_restrict.back().emplace_back(make_pair(j, v - 1), i);
+        col[j][v - 1].clear();
+    }
+
+    void clear_block(int b, int v) {
+        for (const pair<int, int> &p : block[b][v - 1])
+            block_restrict.back().emplace_back(make_pair(b, v - 1), p);
+        block[b][v - 1].clear();
     }
 
     /*******************
@@ -945,9 +1007,8 @@ bool backtracking_search(Inferer &inferer) {
     #ifdef DEBUG
         cout << "New stack frame" << endl;
     #endif
-    // If the last guess created a conflict or if a conflict
-    // is encountered during inference, backtrack immediately
-    if (!inferer.initialize() || inferer.infer() == 2) {
+    // If a conflict is encountered during inference, backtrack immediately
+    if (inferer.infer() == 2) {
         #ifdef DEBUG
             cout << "Backtracking..." << endl;
         #endif
@@ -959,11 +1020,11 @@ bool backtracking_search(Inferer &inferer) {
     pair<int, int> var;
     set<int> domain = inferer.get_guess_domain(var);
     for (int val : domain) {
-        inferer.new_assignment_layer();
+        inferer.new_layer();
         if (inferer.get_guess_count() >= 1000) return true;
-        inferer.guess(var, val);
-        if (backtracking_search(inferer)) return true;
-        inferer.unassign();
+        // If guess creates no conflict and solution is found, hooray!
+        if (inferer.guess(var, val) != 2 && backtracking_search(inferer)) return true;
+        inferer.backtrack();
     }
     // If no values in the domain lead to a solution, we need to backtrack further
     #ifdef DEBUG
