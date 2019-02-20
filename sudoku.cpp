@@ -6,6 +6,8 @@
 #include <string>
 #include <set>
 #include <algorithm>
+#include <fstream>
+
 using namespace std;
 
 class Inferer {
@@ -1033,7 +1035,7 @@ bool backtracking_search(Inferer &inferer) {
     return false;
 }
 
-void read_puzzle(vector<int**> &board) {
+void read_puzzle(vector<int**> &board, ifstream& f) {
     board.push_back(new int*[9]);
     int **b = board.back();
 
@@ -1041,9 +1043,9 @@ void read_puzzle(vector<int**> &board) {
         b[i] = new int[9];
 
     string s;
-    getline(cin, s); // difficulty level is read in this line, if needed for something
+    getline(f, s); // difficulty level is read in this line, if needed for something
     for (int i = 0; i < 9; ++i) {
-        getline(cin, s);
+        getline(f, s);
         b[i][0] =  s[0] - '0';
         b[i][1] =  s[1] - '0';
         b[i][2] =  s[2] - '0';
@@ -1054,14 +1056,24 @@ void read_puzzle(vector<int**> &board) {
         b[i][7] =  s[9] - '0';
         b[i][8] = s[10] - '0';
     }
-    getline(cin, s);
+    getline(f, s);
 }
 
-int main() {
+int main(int argc, char *argv[]) 
+{
+	if (argc != 2)
+	{
+		cout << "usage: " << argv[0] << " <filename>\n";
+		return 1;
+	}
+
+	// We assume argv[1] is a filename to open
+	ifstream puzzle_file(argv[1]);
+
     vector<int**> board;
 
     while (board.size() < 77)
-        read_puzzle(board);
+        read_puzzle(board, puzzle_file);
 
     for (bool m : { true, false }) {
         for (int s : { 0, 1, 2, 3 }) { 
