@@ -8,6 +8,9 @@
 \usepackage{float}
 \usepackage{comment}
 \usepackage{mathtools}
+\usepackage{rotating}
+\usepackage{tikz}
+\usepackage{csquotes}
 
 \definecolor{dkgreen}{rgb}{0,0.6,0}
 \definecolor{gray}{rgb}{0.5,0.5,0.5}
@@ -105,9 +108,140 @@ The most constrained variable heuristic searches the grid for the cell with the 
 The file provided with the assignment description contained 77 puzzles ranked from Easy to Evil. All 77 puzzles were solved using each of the two heuristic (fixed ordering, most-restricted variable), and with four different sets of inference rules (no inference, naked/hidden singles only, naked/hidden singles and pairs, naked/hidden singles, pairs, and triples). The number of guesses made and the number of applications of each specific inference rule were tracked for each solution attempt. If the puzzle was not solved in 1000 guesses, the search was stopped, and the number of squares filled at that point was recorded.
 
 \section{Results}
+Each team should try to solve all the problems, starting with the easy ones. Report the number of problems solved and the number of backtracks with each problem. Experts appear to grade the problems by the complexity of rules needed to solve them without backtracking. Is this conjecture roughly correct? Grade each problem, by the set of rules used in solving it. Report also the average number of filled-in numbers (in the beginning) for each of these types of problems. Would this accurately reflect the difficulty of the problem?
+
+Report your results in the form of a mini-paper as you did for the other two assignments. Give the pseudocode for the algorithm. Discuss how the results vary with the difficulty of the problems, and the effectiveness of the most-constrained variable heuristic compared to fixed selection. Also report on the effectiveness of rule subsets in reducing the search. Is the number of backtracks reduced by increased inference rules? Please feel free to include any other observations.
+
+\subsection{Puzzles Solved and Timing}
+There were a total of 616 total puzzle configurations tested. This reflects 8 different configurations for each of 77 puzzles. Out of these 616 total puzzles, 602 puzzles were solved within the experiment 1000 step limit. The average number of backtracking steps to complete these solved puzzles vs. the expert rated difficulty of the puzzles is shown in figure \ref{fig:avg_steps_solved_puzzles}.
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.5]{plots/avg-steps-solved-puzzles.png}\\
+	\end{tabular}
+	\caption{Average Steps To Solve The Solved Puzzles}%
+	\label{fig:avg_steps_solved_puzzles}%
+\end{figure}
+
+Beyond the solved puzzles, there were 14 puzzles that could not be solved within 1000 steps. All of these puzzle configurations did not use the MRV heuristic to pick a cell. The distribution of these unsolved puzzles across the expert puzzle difficulties is shown in figure \ref{fig:dist_unsolved_vs_diff}.\\
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.5]{plots/count-unsolved-puzzles-vs-expert-diff.png}\\
+	\end{tabular}
+	\caption{Distribution of Unsolved Puzzles vs. Expert Difficulty}%
+	\label{fig:dist_unsolved_vs_diff}%
+\end{figure}
+
+The total time spent on all puzzle solving for the 616 puzzle configurations was approximately 670 milliseconds. The average puzzle solving time is just under 1.1 millisecond per puzzle and is shown in table \ref{table:puzzle_timing}.\\
+
+\begin{table}[h!]
+	\begin{center}
+		\caption{Puzzle Solving Time}
+		\label{table:puzzle_timing}
+		\begin{tabular}{|c|c|}
+			\hline 
+			Total experiment time & 669.912	milliseconds \\ 
+			\hline 
+			Total puzzles & 616 \\ 
+			\hline 
+			Average puzzle time & 1.087519481 milliseconds \\ 
+			\hline 
+		\end{tabular}
+	\end{center}
+\end{table}
+
+\subsection{Difficulty, Inference Scheme, Inference Heuristics}
+The amount of backtracking spent on each puzzle was greatly dependent on how a cell was picked, e.g. using the fixed baseline or using the MRV heuristic. The total and average backtrack counts versus the cell-picking method can be seen in in figure \ref{fig:total_backtracks_vs_mrv_heuristic} and figure \ref{fig:avg_backtrack_count_vs_cell_heuristic}, respectively.\\
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.4]{plots/sum-backtrack-count-vs-cell-picking-heuristic.png}\\
+	\end{tabular}
+	\caption{Total Backtrack Count vs. Cell-Picking Heuristic}%
+	\label{fig:sum_backtrack_count_vs_cell_heuristic}%
+\end{figure}
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.4]{plots/avg-backtrack-count-vs-cell-picking-heuristic.png}\\
+	\end{tabular}
+	\caption{Average Backtrack Count vs. Cell-Picking Heuristic}%
+	\label{fig:avg_backtrack_count_vs_cell_heuristic}%
+\end{figure}
+
+Examining the backtracking behavior more deeply, we can see that there was generally more backtracking for the more difficult puzzles, as rated by the experts.  The total and average backtrack counts versus the expert puzzle difficulty can be seen in in figure \ref{fig:total_backtrack_vs_diff} and figure \ref{fig:avg_backtracks_vs_diff}, respectively.\\
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.4]{plots/avg-guess-count-vs-puzzle-diff.png}\\
+	\end{tabular}
+	\caption{Average Backtracks/Guesses vs. Expert Puzzle Difficulty}%
+	\label{fig:avg_backtracks_vs_diff}%
+\end{figure}
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.4]{plots/total-guess-count-vs-puzzle-diff.png}\\
+	\end{tabular}
+	\caption{Total Backtracks/Guesses vs. Expert Puzzle Difficulty}%
+	\label{fig:total_backtrack_vs_diff}%
+\end{figure}
+
+The overall breakdown of the average backtracking activity can be seen in figure \ref{fig:avg_backtracks_vs_factors}. It is easy to see that the dominant factor affecting the backtracking across cell-picking method and single/pair/triple constraints was indeed the cell-picking method.\\
+
+\begin{sidewaysfigure}
+	\centering
+	\includegraphics[scale=0.66]{plots/average-backtrack-guesses-vs-diff-scheme-heuristic.png}\\
+	\caption{Average Backtracks/Guesses vs. Difficulty, Inference Scheme, Inference Heuristics}%
+	\label{fig:avg_backtracks_vs_factors}%
+\end{sidewaysfigure}
+
+If we analyze the average number of cells filled in versus the expert puzzle difficulty (see figure \ref{fig:avg_filled_vs_diff}), we can see that the easy puzzles have more filled in cells. However, for medium, hard, and evil puzzles, there is not much of a difference.\\
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.4]{plots/avg-num-filled-in-vs-puzzle-difficulty.png}\\
+	\end{tabular}
+	\caption{Average Number of Filled In Cells vs. Expert Puzzle Difficulty}%
+	\label{fig:avg_filled_vs_diff}%
+\end{figure}
+
+\subsection{Distribution of Inference Constraints}
+The distribution of the inference constraints (Naked Singles, Hidden Singles, Naked Pairs, Hidden Pairs, Naked Triples, Hidden Triples) across the expert puzzle difficulty ratings is mostly as we might expect. The easy puzzles show a reliance on Naked Singles, the medium puzzles show that we are using Hidden Singles in addition to the Naked Singles, the hard puzzles add Hidden Pairs to the mix, and finally, the evil puzzles show that we are now also utilizing Naked Pairs. We can also see that the evil puzzles occasionally utilize both the Hidden Triples and Naked Triples. The distribution is shown in figure \ref{fig:dist_inf_vs_puzzle_diff}.\\
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.4]{plots/dist-inf-heuristics-vs-puzzle-diff.png}\\
+	\end{tabular}
+	\caption{Distribution of Inference Heuristics vs. Puzzle Difficulty}%
+	\label{fig:dist_inf_vs_puzzle_diff}%
+\end{figure}
+
+Across the puzzles themselves, we see that there were only a few more difficult puzzles (numbers 4 and 26, and, to a lesser extent, number 60) that relied on more inference heuristics. We can also see that some puzzles only utilized one inference heuristic. Figure \ref{fig:dist_inf_vs_puzzle_num} shows the overall distribution over the individual puzzles.\\ 
+
+\begin{sidewaysfigure}
+	\centering
+	\includegraphics[scale=0.50]{plots/dist-inf-heuristics-vs-puzzle-number.png}\\	
+	\caption{{Distribution of Inference Heuristics vs. Puzzle Number}}
+	\label{fig:dist_inf_vs_puzzle_num}%
+\end{sidewaysfigure}
+
+When we examine the distribution of total backtracking across the inference heuristics and take into account the cell-picking method, we can see that when we are using the baseline cell-picking method, we can see the increased backtracking activity, as discussed previously. What is more interesting is that for the single/pairs/triples, we see that the use of these heuristics in backtracking is relatively evenly distributed across the two cell-picking methods. The distribution can be seen in figure \ref{fig:total_backtracks_vs_mrv_heuristic}.
+
+\begin{figure}[H]%
+	\centering\begin{tabular}{c}
+		\includegraphics[scale=0.4]{plots/total-backtrack-guesses-vs-mrv-and-heuristic.png}\\
+	\end{tabular}
+	\caption{Total Backtracks/Guesses vs. MRV/Baseline and Heuristic}%
+	\label{fig:total_backtracks_vs_mrv_heuristic}%
+\end{figure}
 
 \section{Discussion}
-% From PA3 assignment page: Discuss how the results vary with the difficulty of the problems, and the effectiveness of the most-constrained variable heuristic compared to fixed selection. Also report on the effectiveness of rule subsets in reducing the search. Is the number of backtracks reduced by increased inference rules? What about the total time for solving the puzzles? Please feel free to include any other observations.%
+Across all of the experimental configurations, roughly 98\% of the puzzles were solved within 1000 steps. While not in the scope of this experimental effort, if the step limit had been increased, we are confident that all of the puzzles would have been solved. The total time taken for the 616 puzzles was less than 1 second, demonstrating the efficiency of the overall solution. Using the MRV method to pick the cell helped keep backtracking activity to a minimum and the inference of constraint heuristics was also effective, especially the simpler single constraints. With more difficult puzzles, we could see that the more complex pair/triple constraints were also utilized. We speculate that given a greater variety of test puzzles, especially more puzzles that would have been rated hard/evil by the experts, we would see even further use of the pair/triple constraints.\\
+\\
+Taking into consideration the approximately 1.1 millisecond per puzzle solving time and the not insubstantial total backtracking counts, we might surmise that future work should focus on how to cut down backtracking activity. The puzzle solving time is reasonable, especially considered as merely \enquote{wall time}, but there is likely room to improve on the backtracking. We might investigate more effective cell-picking methods and additional approaches for finding useful constraints. To assess the generality of our approach, we might test on both a much larger number of Sudoku puzzles as well as novel Sudoku configurations beyond the $9 \times 9$ grid and/or $3 \times 3$ blocks.
+
 \section{Code}
 \begin{lstlisting}
 #include <iostream>
