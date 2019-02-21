@@ -1075,9 +1075,13 @@ int main(int argc, char *argv[])
     while (board.size() < 77)
         read_puzzle(board, puzzle_file);
 
-    for (bool m : { true, false }) {
-        for (int s : { 0, 1, 2, 3 }) { 
-            for (int i = 0; i < board.size(); ++i) {
+    for (bool m : { true, false }) 
+	{		
+        for (int s : { 0, 1, 2, 3 }) 
+		{ 
+            for (int i = 0; i < board.size(); ++i) 
+			{
+				cout << "-- m: " << m << " s: " << s << " board: " << i << " ---------------------------------------------------------------------------" << endl;
                 Inferer inferer(board[i], i + 1, m, s);
                 backtracking_search(inferer);
                 inferer.print();
