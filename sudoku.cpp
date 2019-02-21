@@ -7,10 +7,13 @@
 #include <set>
 #include <algorithm>
 #include <fstream>
+#include <map>
 
 using namespace std;
 
 //#define SUDOKU_DEBUG
+
+std::map<int, string> board_diff;
 
 class Inferer {
     int board[9][9];
@@ -72,7 +75,7 @@ public:
             for (int j = 0; j < 9; ++j)
                 if (board[i][j] > 0)
                     ++filled;
-        #ifdef DEBUG
+        #ifdef SUDOKU_DEBUG
             cout << endl;
             for (int i = 0; i < 9; ++i) {
                 for (int j = 0; j < 9; ++j)
@@ -93,7 +96,7 @@ public:
             cout << "Hidden triple applications: " << hidden_triple_apps << endl;
             cout << endl;
         #else
-            cout << puzzle_no << ',' << guess_count << ','
+            cout << puzzle_no << ',' << board_diff[puzzle_no] << ","  << guess_count << ','
                  << boolalpha << MRV << ',' << scheme << ','
                  << fixed << setprecision(1) << 100 * filled / 81.0 << ','
                  << naked_single_apps << ',' << hidden_single_apps << ','
@@ -994,7 +997,7 @@ public:
                         if (r == 0) {
                             r = naked_triple();
                             if (r == 0)
-                                r == hidden_triple();
+                                r = hidden_triple();
                         }
                     }
                 }
@@ -1046,6 +1049,9 @@ void read_puzzle(vector<int**> &board, ifstream& f) {
 
     string s;
     getline(f, s); // difficulty level is read in this line, if needed for something
+	auto x = s.find(' ');
+	string diff = s.substr(x, string::npos);
+	board_diff[board.size()] = diff;
     for (int i = 0; i < 9; ++i) {
         getline(f, s);
         b[i][0] =  s[0] - '0';
@@ -1077,13 +1083,18 @@ int main(int argc, char *argv[])
     while (board.size() < 77)
         read_puzzle(board, puzzle_file);
 
+	//for (auto it = board_diff.cbegin(); it != board_diff.cend(); ++it)
+	//{
+	//	std::cout << it->first << " " << it->second << endl;
+	//}
+	
+	cout << "PuzzleNumber, Difficulty, GuessCount, MRV, Scheme, Filled, NakedSingles, HiddenSingles, NakedPairs, HiddenPairs, NakedTriples, HiddenTriples" << endl;
     for (bool m : { true, false }) 
 	{		
         for (int s : { 0, 1, 2, 3 }) 
 		{ 
             for (int i = 0; i < board.size(); ++i) 
-			{
-				cout << "-- m: " << m << " s: " << s << " board: " << i << " ---------------------------------------------------------------------------" << endl;
+			{				
                 Inferer inferer(board[i], i + 1, m, s);
                 backtracking_search(inferer);
                 inferer.print();
