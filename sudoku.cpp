@@ -10,6 +10,8 @@
 
 using namespace std;
 
+//#define SUDOKU_DEBUG
+
 class Inferer {
     int board[9][9];
     int puzzle_no;
@@ -155,7 +157,7 @@ public:
     }
 
     int guess(pair<int, int> &var, int val) {
-        #ifdef DEBUG
+        #ifdef SUDOKU_DEBUG
             cout << "Guess " << val << " for (" << var.first << ", " << var.second << ")" << endl;
         #endif
         ++guess_count;
@@ -326,7 +328,7 @@ public:
         for (int i = 0; i < 9; ++i)
             for (int j = 0; j < 9; ++j)
                 if (cell[i][j].size() == 1) {
-                    #ifdef DEBUG
+                    #ifdef SUDOKU_DEBUG
                         cout << "Naked single found in cell (" << i << ", " << j << ')' << endl;
                     #endif
                     ++naked_single_apps;
@@ -339,14 +341,14 @@ public:
         for (int x = 0; x < 9; ++x) {
             for (int v = 0; v < 9; ++v) {
                 if (row[x][v].size() == 1) {
-                    #ifdef DEBUG
+                    #ifdef SUDOKU_DEBUG
                         cout << "Hidden single found in cell (" << x << ", " << *row[x][v].begin() << ')' << endl;
                     #endif
                     ++hidden_single_apps;
                     return assign(x, *row[x][v].begin(), v + 1);
                 }
                 if (col[x][v].size() == 1) {
-                    #ifdef DEBUG
+                    #ifdef SUDOKU_DEBUG
                         cout << "Hidden single found in cell (" << *col[x][v].begin() << ", " << x << ')' << endl;
                     #endif
                     ++hidden_single_apps;
@@ -354,7 +356,7 @@ public:
                 }
                 if (block[x][v].size() == 1) {
                     pair<int, int> p = *block[x][v].begin();
-                    #ifdef DEBUG
+                    #ifdef SUDOKU_DEBUG
                         cout << "Hidden single found in cell (" << p.first << ", " << p.second << ')' << endl;
                     #endif
                     ++hidden_single_apps;
@@ -388,7 +390,7 @@ public:
                         if (second) ++it; // Iterate through smaller of the two column sets
                         for (set<int>::iterator cit = row[r][*it - 1].upper_bound(c1); cit != row[r][*it - 1].end(); ++cit)
                             if (cell[r][c1] == cell[r][*cit]) { // If naked pair found
-                                #ifdef DEBUG
+                                #ifdef SUDOKU_DEBUG
                                     cout << "Row: Naked pair found in cells (" << r << ", " << c1 << ')';
                                     cout << " and (" << r << ", " << *cit << ")" << endl;
                                 #endif
@@ -396,7 +398,7 @@ public:
                                 for (int v : cell[r][c1]) {
                                     for (int c : row[r][v - 1])
                                         if (c != c1 && c != *cit) {
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Eliminating (" << r << ", " << c << ", " << v << ")" << endl;
                                             #endif
                                             if (eliminate(r, c, v)) return 2;
@@ -429,7 +431,7 @@ public:
                         if (second) ++it; // Iterate through smaller of the two row sets
                         for (set<int>::iterator rit = col[c][*it - 1].upper_bound(r1); rit != col[c][*it - 1].end(); ++rit)
                             if (cell[r1][c] == cell[*rit][c]) { // If naked pair found
-                                #ifdef DEBUG
+                                #ifdef SUDOKU_DEBUG
                                     cout << "Column: Naked pair found in cells (" << r1 << ", " << c << ')';
                                     cout << " and (" << *rit << ", " << c << ")" << endl;
                                 #endif
@@ -438,7 +440,7 @@ public:
                                     // From all other cells in the column
                                     for (int r : col[c][v - 1])
                                         if (r != r1 && r != *rit) {
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Eliminating (" << r << ", " << c << ", " << v << ")" << endl;
                                             #endif
                                             if (eliminate(r, c, v)) return 2;
@@ -475,7 +477,7 @@ public:
                             if (second) ++it; // Iterate through smaller of the two coordinate sets
                             for (set<pair<int, int>>::iterator pit = block[b][*it - 1].upper_bound(p1); pit != block[b][*it - 1].end(); ++pit)
                                 if (cell[r1][c1] == cell[pit->first][pit->second]) { // If naked pair found
-                                    #ifdef DEBUG
+                                    #ifdef SUDOKU_DEBUG
                                         cout << "Block: Naked pair found in cells (" << r1 << ", " << c1 << ')';
                                         cout << " and (" << pit->first << ", " << pit->second << ")" << endl;
                                     #endif
@@ -483,7 +485,7 @@ public:
                                     for (int v : cell[r1][c1]) {
                                         for (const pair<int, int> &p : block[b][v - 1])
                                             if (p != p1 && p != *pit) {
-                                                #ifdef DEBUG
+                                                #ifdef SUDOKU_DEBUG
                                                     cout << "Eliminating (" << p.first << ", " << p.second << ", " << v << ")" << endl;
                                                 #endif
                                                 if (eliminate(p.first, p.second, v)) return 2;
@@ -522,14 +524,14 @@ public:
                         if (second) ++it; // Iterate through smaller of the two value sets
                         for (set<int>::iterator vit = cell[x][*it].upper_bound(v + 1); vit != cell[x][*it].end(); ++vit)
                             if (row[x][v] == row[x][*vit - 1]) { // If hidden pair found
-                                #ifdef DEBUG
+                                #ifdef SUDOKU_DEBUG
                                     cout << "Row: Hidden pair found with values " << v + 1 << ", " << *vit << endl;
                                 #endif
                                 // Eliminate all other values from the pair of cells.
                                 for (int c : row[x][v]) {
                                     for (int val : cell[x][c])
                                         if (val != v + 1 && val != *vit) {
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Eliminating (" << x << ", " << c << ", " << val << ")" << endl;
                                             #endif
                                             if (eliminate(x, c, val)) return 2;
@@ -557,14 +559,14 @@ public:
                         if (second) ++it; // Iterate through smaller of the two value sets
                         for (set<int>::iterator vit = cell[*it][x].upper_bound(v + 1); vit != cell[*it][x].end(); ++vit)
                             if (col[x][v] == col[x][*vit - 1]) { // If hidden pair found
-                                #ifdef DEBUG
+                                #ifdef SUDOKU_DEBUG
                                     cout << "Column: Hidden pair found with values " << v + 1 << ", " << *vit << endl;
                                 #endif
                                 // Eliminate all other values from the pair of cells.
                                 for (int r : col[x][v]) {
                                     for (int val : cell[r][x])
                                         if (val != v + 1 && val != *vit) {
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Eliminating (" << r << ", " << x << ", " << val << ")" << endl;
                                             #endif
                                             if (eliminate(r, x, val)) return 2;
@@ -592,14 +594,14 @@ public:
                         if (second) ++it; // Iterate through smaller of the two value sets
                         for (set<int>::iterator vit = cell[it->first][it->second].upper_bound(v + 1); vit != cell[it->first][it->second].end(); ++vit)
                             if (block[x][v] == block[x][*vit - 1]) { // If hidden pair found
-                                #ifdef DEBUG
+                                #ifdef SUDOKU_DEBUG
                                     cout << "Block: Hidden pair found with values " << v + 1 << ", " << *vit << endl;
                                 #endif
                                 // Eliminate all other values from the pair of cells.
                                 for (const pair<int, int> &p : block[x][v]) {
                                     for (int val : cell[p.first][p.second])
                                         if (val != v + 1 && val != *vit) {
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Eliminating (" << p.first << ", " << p.second << ", " << val << ")" << endl;
                                             #endif
                                             if (eliminate(p.first, p.second, val)) return 2;
@@ -641,7 +643,7 @@ public:
                                             // At this point, before declaring it a naked triple, we must check that one of the values
                                             // appears in a cell in the row outside of the triple (otherwise, we will repeatedly find
                                             // the same triple).
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Row: Naked triple found in cells (" << r << ", " << c1 << "), (";
                                                 cout << r << ", " << c2 << "), and (" << r << ", " << c3 << ")" << endl;
                                             #endif
@@ -651,7 +653,7 @@ public:
                                                 for (int c : row[r][v - 1])
                                                     if (c != c1 && c != c2 && c != c3) {
                                                         eliminated = true;
-                                                        #ifdef DEBUG
+                                                        #ifdef SUDOKU_DEBUG
                                                             cout << "Eliminating (" << r << ", " << c << ", " << v << ")" << endl;
                                                         #endif
                                                         if (eliminate(r, c, v)) return 2;
@@ -661,7 +663,7 @@ public:
                                                 ++naked_triple_apps;
                                                 return 1;
                                             }
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 else cout << "Nothing eliminated." << endl;
                                             #endif
                                         }
@@ -694,7 +696,7 @@ public:
                                             // At this point, before declaring it a naked triple, we must check that one of the values
                                             // appears in a cell in the column outside of the triple (otherwise, we will repeatedly find
                                             // the same triple).
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Column: Naked triple found in cells (" << r1 << ", " << c << "), (";
                                                 cout << r2 << ", " << c << "), and (" << r3 << ", " << c << ")" << endl;
                                             #endif
@@ -704,7 +706,7 @@ public:
                                                 for (int r : col[c][v - 1])
                                                     if (r != r1 && r != r2 && r != r3) {
                                                         eliminated = true;
-                                                        #ifdef DEBUG
+                                                        #ifdef SUDOKU_DEBUG
                                                             cout << "Eliminating (" << r << ", " << c << ", " << v << ")" << endl;
                                                         #endif
                                                         if (eliminate(r, c, v)) return 2;
@@ -714,7 +716,7 @@ public:
                                                 ++naked_triple_apps;
                                                 return 1;
                                             }
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 else cout << "Nothing eliminated." << endl;
                                             #endif
                                         }
@@ -754,7 +756,7 @@ public:
                                             // At this point, before declaring it a naked triple, we must check that one of the values
                                             // appears in a cell in the block outside of the triple (otherwise, we will repeatedly find
                                             // the same triple).
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Block: Naked triple found in cells (" << p1.first << ", " << p1.second << "), (";
                                                 cout << p2.first << ", " << p2.second << "), and (" << p3.first << ", " << p3.second << ")" << endl;
                                             #endif
@@ -764,7 +766,7 @@ public:
                                                 for (const pair<int, int> &p : block[b][v - 1])
                                                     if (p != p1 && p != p2 && p != p3) {
                                                         eliminated = true;
-                                                        #ifdef DEBUG
+                                                        #ifdef SUDOKU_DEBUG
                                                             cout << "Eliminating (" << p.first << ", " << p.second << ", " << v << ")" << endl;
                                                         #endif
                                                         if (eliminate(p.first, p.second, v)) return 2;
@@ -774,7 +776,7 @@ public:
                                                 ++naked_triple_apps;
                                                 return 1;
                                             }
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 else cout << "Nothing eliminated." << endl;
                                             #endif
                                         }
@@ -816,7 +818,7 @@ public:
                                             // At this point, before declaring it a hidden triple, we must check that one of the cells
                                             // in the triple has some value outside the triple (otherwise, it has already been handled
                                             // as a naked triple).
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Row: Hidden triple found with values " << v1 + 1 << ", " << v2 + 1 << ", and " << v3 + 1 << endl;
                                             #endif
                                             // Eliminate all other values from the triple of cells.
@@ -825,7 +827,7 @@ public:
                                                 for (int v : cell[x][c])
                                                     if (v != v1 + 1 && v != v2 + 1 && v != v3 + 1) {
                                                         eliminated = true;
-                                                        #ifdef DEBUG
+                                                        #ifdef SUDOKU_DEBUG
                                                             cout << "Eliminating (" << x << ", " << c << ", " << v << ")" << endl;
                                                         #endif
                                                         if (eliminate(x, c, v)) return 2;
@@ -835,7 +837,7 @@ public:
                                                 ++hidden_triple_apps;
                                                 return 1;
                                             }
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 else cout << "Nothing eliminated." << endl;
                                             #endif
                                         }
@@ -864,7 +866,7 @@ public:
                                             // At this point, before declaring it a hidden triple, we must check that one of the cells
                                             // in the triple has some value outside the triple (otherwise, it has already been handled
                                             // as a naked triple).
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Column: Hidden triple found with values " << v1 + 1 << ", " << v2 + 1 << ", and " << v3 + 1 << endl;
                                             #endif
                                             // Eliminate all other values from the triple of cells.
@@ -873,7 +875,7 @@ public:
                                                 for (int v : cell[r][x])
                                                     if (v != v1 + 1 && v != v2 + 1 && v != v3 + 1) {
                                                         eliminated = true;
-                                                        #ifdef DEBUG
+                                                        #ifdef SUDOKU_DEBUG
                                                             cout << "Eliminating (" << r << ", " << x << ", " << v << ")" << endl;
                                                         #endif
                                                         if (eliminate(r, x, v)) return 2;
@@ -883,7 +885,7 @@ public:
                                                 ++hidden_triple_apps;
                                                 return 1;
                                             }
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 else cout << "Nothing eliminated." << endl;
                                             #endif
                                         }
@@ -912,7 +914,7 @@ public:
                                             // At this point, before declaring it a hidden triple, we must check that one of the cells
                                             // in the triple has some value outside the triple (otherwise, it has already been handled
                                             // as a naked triple).
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 cout << "Block: Hidden triple found with values " << v1 + 1 << ", and " << v2 + 1 << ", " << v3 + 1 << endl;
                                             #endif
                                             // Eliminate all other values from the triple of cells.
@@ -921,7 +923,7 @@ public:
                                                 for (int v : cell[p.first][p.second])
                                                     if (v != v1 + 1 && v != v2 + 1 && v != v3 + 1) {
                                                         eliminated = true;
-                                                        #ifdef DEBUG
+                                                        #ifdef SUDOKU_DEBUG
                                                             cout << "Eliminating (" << p.first << ", " << p.second << ", " << v << ")" << endl;
                                                         #endif
                                                         if (eliminate(p.first, p.second, v)) return 2;
@@ -931,7 +933,7 @@ public:
                                                 ++hidden_triple_apps;
                                                 return 1;
                                             }
-                                            #ifdef DEBUG
+                                            #ifdef SUDOKU_DEBUG
                                                 else cout << "Nothing eliminated." << endl;
                                             #endif
                                         }
@@ -1006,12 +1008,12 @@ public:
  * Backtracking Search *
  ***********************/
 bool backtracking_search(Inferer &inferer) {
-    #ifdef DEBUG
+    #ifdef SUDOKU_DEBUG
         cout << "New stack frame" << endl;
     #endif
     // If a conflict is encountered during inference, backtrack immediately
     if (inferer.infer() == 2) {
-        #ifdef DEBUG
+        #ifdef SUDOKU_DEBUG
             cout << "Backtracking..." << endl;
         #endif
         return false;
@@ -1029,7 +1031,7 @@ bool backtracking_search(Inferer &inferer) {
         inferer.backtrack();
     }
     // If no values in the domain lead to a solution, we need to backtrack further
-    #ifdef DEBUG
+    #ifdef SUDOKU_DEBUG
         cout << "Backtracking..." << endl;
     #endif
     return false;
